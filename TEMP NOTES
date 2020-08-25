@@ -1,0 +1,34 @@
+module.exports = (shape, body) => {
+  for(const key in shape) {
+    const value = body[key];
+    const validator = shape[key];
+    if(!validator(value))
+      throwHttp(Error(`${key} failed validation: ${validator.toString()}`));
+    shape[key] = value;
+  }
+  return shape;
+};
+i can call it like this:
+
+  .post((req, res) => {
+    const bookmark = normalizeObject({
+      title: title => typeof(title) === 'string' && title.length > 0,
+      url: url => typeof(url) === 'string' && url.startsWith('http'),
+      desc: desc => (desc === null) || (desc === undefined) || (typeof(desc) === 'string'),
+      rating: rating => (rating === null) || (rating === undefined) || ((rating >= 0) && (rating <= 5))
+    }, req.body);
+    bookmark.id = bookmarks.nextId++;
+    bookmarks.push(bookmark);
+    res.status(201).json(bookmark);
+JOHN ADNEYJOHN ADNEY2:59 PM
+<h1 onclick="window.alert('hi')">boo</h1>
+
+<h1>boo</h1>
+
+&lt;h1&gt;boo&lt;h1&gt;
+
+JOHN ADNEY left 
+JOHN ADNEY joined 
+JOHN ADNEY joined the stage 
+JOHN ADNEYJOHN ADNEY5:16 PM
+"no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
