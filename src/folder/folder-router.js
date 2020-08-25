@@ -4,11 +4,11 @@ const xss = require('xss');
 const FolderService = require('./folder-service');
 
 const folderRouter = express.Router();
-const jsonParser = express.json();
+//const jsonParser = express.json();
 
 const serializeFolder = (folder) => ({
   id: folder.id,
-  label: xss(folder.label),
+  name: xss(folder.name),
 });
 
 folderRouter
@@ -23,8 +23,8 @@ folderRouter
   })
   .post((req, res, next) => {
     const knexInstance = req.app.get('db');
-    const { label } = req.body;
-    const newFolder = { label };
+    const { name } = req.body;
+    const newFolder = { name };
 
     for (const [key, value] of Object.entries(newFolder)) {
       if (value == null) {
@@ -34,7 +34,7 @@ folderRouter
       }
     }
 
-    FolderService.insertFolder(knexInstance, newFolder)
+    FolderService.insert(knexInstance, newFolder)
       .then((folder) => {
         res
           .status(201)
@@ -42,46 +42,45 @@ folderRouter
           .json(serializeFolder(folder));
       })
       .catch(next);
-  })
-  .all((req, res, next) => {
-    res.set('Allow', 'GET, POST').status(405).send();
   });
 
 folderRouter
   .route('/:id')
   .all((req, res, next) => {
-    FolderService.getById(knexInstance, folderId).then((folder) => {
+    FolderService.getById(req.app.get('db'), req.params.id).then((folder) => {
       if (!folder) {
         return res
           .status(404)
           .json({ error: { message: `Folder doesn't exist` } });
       }
+      res.folder = folder;
+      next();
     });
   })
-  .get((req, res, next) => {
-    res.json(serializeUser(res.user));
+  .get((req, res, _next) => {
+    res.json(serializeFolder(res.folder));
   })
   .delete((req, res, next) => {
     FolderService.delete(req.app.get('db'), req.params.id)
-      .then((numRowsAffected) => {
+      .then((_numRowsAffected) => {
         res.status(204).end();
       })
       .catch(next);
   })
-  .patch(() => {
-    const { fullname, username, password, nickname } = req.body;
-    const userToUpdate = { fullname, username, password, nickname };
+  .patch((req, res, next) => {
+    const { name } = req.body;
+    const folderToUpdate = { name };
 
-    const numberOfValues = Object.values(userToUpdate).filter(Boolean).length;
+    const numberOfValues = Object.values(folderToUpdate).filter(Boolean).length;
     if (numberOfValues === 0)
       return res.status(400).json({
         error: {
-          message: `Request body must contain either 'fullname', 'username', 'password' or 'nickname'`,
+          message: `Request body must contain 'name'`,
         },
       });
 
-    UsersService.updateUser(req.app.get('db'), req.params.user_id, userToUpdate)
-      .then((numRowsAffected) => {
+    FolderService.updateUser(req.app.get('db'), req.params.id, folderToUpdate)
+      .then((_numRowsAffected) => {
         res.status(204).end();
       })
       .catch(next);
